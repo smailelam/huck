@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>خزانتي — ملفات وفيديوهات</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;800&display=swap">
+<style>
+:root{--bg:#f2f4f1;--ink:#1b2a2f;--mute:#5d6d72;--line:#d3dad6;--acc:#0f7b6c;--accfg:#fff;--card:#fff;--bad:#b3402a;
+ padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12191c;--ink:#e6eeee;--mute:#93a5a8;--line:#2a373b;--acc:#3cc2ad;--accfg:#08201c;--card:#192226;--bad:#ff8a72}}
+:root[data-theme="dark"]{--bg:#12191c;--ink:#e6eeee;--mute:#93a5a8;--line:#2a373b;--acc:#3cc2ad;--accfg:#08201c;--card:#192226;--bad:#ff8a72}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Tajawal",system-ui,"Segoe UI",Tahoma,sans-serif;line-height:1.6}
+main{max-width:920px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:2.2rem;font-weight:800;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 22px}
+#drop{border:2px dashed var(--acc);border-radius:14px;padding:34px 16px;text-align:center;background:var(--card);cursor:pointer;transition:background .15s}
+#drop.over{background:color-mix(in srgb,var(--acc) 12%,var(--card))}
+#drop strong{font-size:1.15rem}
+#drop span{display:block;color:var(--mute);margin-top:4px;font-size:.95rem}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px}
+button.p{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+button.d{color:var(--bad)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 12px}
+.bar input[type=search]{flex:1;min-width:160px;font:inherit;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.tabs{display:flex;gap:6px}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#info{color:var(--mute);font-size:.92rem;margin-bottom:10px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.it{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.pv{height:150px;background:color-mix(in srgb,var(--ink) 7%,var(--card));display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pv img,.pv video{width:100%;height:100%;object-fit:cover}
+.pv b{font-size:1.5rem;color:var(--mute);direction:ltr}
+.meta{padding:10px 12px 6px;flex:1}
+.nm{font-weight:500;word-break:break-word;direction:auto}
+.sz{color:var(--mute);font-size:.85rem}
+.act{display:flex;gap:6px;padding:8px 12px 12px}
+.empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:40px 0}
+dialog{border:0;border-radius:14px;padding:0;max-width:min(960px,94vw);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:#000a}
+dialog video,dialog img{display:block;max-width:100%;max-height:78vh;margin:auto}
+dialog header{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;align-items:center}
+p.note{color:var(--mute);font-size:.88rem;margin-top:28px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<main>
+  <h1>خزانتي</h1>
+  <p class="sub">خزّن ملفاتك وفيديوهاتك هنا، وشاهدها أو حمّلها متى شئت.</p>
+
+  <div id="drop" tabindex="0" role="button" aria-label="اختيار ملفات للرفع">
+    <strong>اسحب الملفات هنا أو اضغط للاختيار</strong>
+    <span>أي نوع من الملفات: فيديو، صور، PDF، مستندات…</span>
+  </div>
+  <input id="pick" type="file" multiple hidden>
+  <input id="pickdir" type="file" webkitdirectory multiple hidden>
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+    <button class="p" id="btnmany">رفع عدة ملفات</button>
+    <button id="btndir">رفع مجلد كامل</button>
+  </div>
+
+  <div class="bar">
+    <input id="q" type="search" placeholder="ابحث باسم الملف" aria-label="بحث">
+    <div class="tabs" role="group" aria-label="تصفية">
+      <button data-f="all" aria-pressed="true">الكل</button>
+      <button data-f="video" aria-pressed="false">فيديو</button>
+      <button data-f="image" aria-pressed="false">صور</button>
+      <button data-f="other" aria-pressed="false">ملفات</button>
+    </div>
+  </div>
+  <div id="info" aria-live="polite"></div>
+  <div id="grid"></div>
+
+  <p class="note">الملفات تُحفظ داخل متصفحك على هذا الجهاز فقط، ولا تُرسل إلى أي خادم. مسح بيانات الموقع من المتصفح يحذفها، لذا احتفظ بنسخة احتياطية مما يهمك.</p>
+</main>
+
+<dialog id="dlg">
+  <header><strong id="dt"></strong><button id="dc">إغلاق</button></header>
+  <div id="db"></div>
+</dialog>
+
+<script>
+(function(){
+  var DB='khizanati',ST='files',db,filter='all',query='',urls=[];
+  var $=function(s){return document.querySelector(s)};
+
+  function open(){return new Promise(function(res,rej){
+    var r=indexedDB.open(DB,1);
+    r.onupgradeneeded=function(){r.result.createObjectStore(ST,{keyPath:'id',autoIncrement:true})};
+    r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)};
+  })}
+  function tx(mode,fn){return new Promise(function(res,rej){
+    var t=db.transaction(ST,mode),s=t.objectStore(ST),q=fn(s);
+    t.oncomplete=function(){res(q&&q.result)};t.onerror=t.onabort=function(){rej(t.error)};
+  })}
+  function kind(f){var t=f.type||'';return t.indexOf('video')==0?'video':t.indexOf('image')==0?'image':'other'}
+  function size(n){var u=['بايت','ك.ب','م.ب','ج.ب'],i=0;while(n>=1024&&i<3){n/=1024;i++}return n.toFixed(i?1:0)+' '+u[i]}
+  function ext(n){var m=/\.([^.]+)$/.exec(n);return m?m[1].slice(0,4).toUpperCase():'FILE'}
+
+  async function add(files){
+    var ok=0,fail=0;
+    for(var i=0;i<files.length;i++){
+      var f=files[i];
+      try{await tx('readwrite',function(s){return s.add({name:f.name,type:f.type,size:f.size,added:Date.now(),blob:f})});ok++}
+      catch(e){fail++}
+    }
+    $('#info').textContent=(ok?'تم رفع '+ok+' ملف. ':'')+(fail?'تعذّر رفع '+fail+' (قد تكون المساحة ممتلئة).':'');
+    render(true);
+  }
+
+  async function render(keepMsg){
+    urls.forEach(URL.revokeObjectURL);urls=[];
+    var all=await tx('readonly',function(s){return s.getAll()});
+    all.sort(function(a,b){return b.added-a.added});
+    var total=all.reduce(function(a,x){return a+x.size},0);
+    var list=all.filter(function(x){
+      return (filter=='all'||kind(x)==filter)&&x.name.toLowerCase().indexOf(query)>-1});
+    if(!keepMsg)$('#info').textContent=all.length?all.length+' ملف — '+size(total):'';
+    else if(all.length)$('#info').textContent+=' (الإجمالي: '+all.length+' ملف، '+size(total)+')';
+    var g=$('#grid');g.textContent='';
+    if(!list.length){g.innerHTML='<div class="empty">'+(all.length?'لا توجد نتائج مطابقة.':'لا توجد ملفات بعد. ارفع أول ملف من الأعلى.')+'</div>';return}
+    list.forEach(function(x){
+      var k=kind(x),u=URL.createObjectURL(x.blob);urls.push(u);
+      var d=document.createElement('div');d.className='it';
+      var pv=document.createElement('div');pv.className='pv';
+      if(k=='image'){var im=new Image();im.src=u;im.alt='';pv.appendChild(im)}
+      else if(k=='video'){var v=document.createElement('video');v.src=u+'#t=0.5';v.preload='metadata';v.muted=true;pv.appendChild(v)}
+      else{pv.innerHTML='<b></b>';pv.firstChild.textContent=ext(x.name)}
+      var m=document.createElement('div');m.className='meta';
+      var n=document.createElement('div');n.className='nm';n.textContent=x.name;
+      var z=document.createElement('div');z.className='sz';z.textContent=size(x.size)+' — '+new Date(x.added).toLocaleDateString('ar');
+      m.append(n,z);
+      var a=document.createElement('div');a.className='act';
+      if(k!='other'){var o=document.createElement('button');o.className='p';o.textContent='عرض';o.onclick=function(){show(x,u,k)};a.appendChild(o)}
+      var dl=document.createElement('button');dl.textContent='تحميل';dl.onclick=function(){
+        var l=document.createElement('a');l.href=u;l.download=x.name;l.click()};
+      var rm=document.createElement('button');rm.className='d';rm.textContent='حذف';rm.onclick=async function(){
+        if(confirm('حذف «'+x.name+'» نهائيًا؟')){await tx('readwrite',function(s){return s.delete(x.id)});render()}};
+      a.append(dl,rm);
+      d.append(pv,m,a);g.appendChild(d);
+    });
+  }
+
+  function show(x,u,k){
+    $('#dt').textContent=x.name;var b=$('#db');b.textContent='';
+    var e=k=='video'?document.createElement('video'):new Image();
+    e.src=u;if(k=='video'){e.controls=true;e.autoplay=true}else e.alt=x.name;
+    b.appendChild(e);$('#dlg').showModal();
+  }
+  $('#dc').onclick=function(){$('#dlg').close()};
+  $('#dlg').addEventListener('close',function(){var v=$('#db video');if(v)v.pause()});
+
+  var dz=$('#drop'),pk=$('#pick');
+  dz.onclick=function(){pk.click()};
+  dz.onkeydown=function(e){if(e.key=='Enter'||e.key==' '){e.preventDefault();pk.click()}};
+  pk.onchange=function(){if(pk.files.length)add(pk.files);pk.value=''};
+  ['dragenter','dragover'].forEach(function(t){dz.addEventListener(t,function(e){e.preventDefault();dz.classList.add('over')})});
+  ['dragleave','drop'].forEach(function(t){dz.addEventListener(t,function(e){e.preventDefault();dz.classList.remove('over')})});
+  dz.addEventListener('drop',function(e){if(e.dataTransfer.files.length)add(e.dataTransfer.files)});
+  var pd=$('#pickdir');
+  $('#btnmany').onclick=function(){pk.click()};
+  $('#btndir').onclick=function(){pd.click()};
+  pd.onchange=function(){if(pd.files.length)add(pd.files);pd.value=''};
+  $('#q').oninput=function(e){query=e.target.value.toLowerCase();render()};
+  document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function(){
+    filter=b.dataset.f;document.querySelectorAll('.tabs button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
+
+  open().then(function(d){db=d;render()}).catch(function(){
+    $('#info').textContent='متصفحك لا يسمح بالتخزين المحلي هنا (قد يكون وضع التصفح الخفي).'});
+})();
+</script>
+</body>
+</html>
