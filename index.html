@@ -168,6 +168,7 @@ p.note{color:var(--mute);font-size:.88rem;margin-top:28px;border-top:1px solid v
   document.querySelectorAll('.tabs button').forEach(function(b){b.onclick=function(){
     filter=b.dataset.f;document.querySelectorAll('.tabs button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});render()}});
 
+  if(navigator.storage&&navigator.storage.persist){navigator.storage.persist()}
   open().then(function(d){db=d;render()}).catch(function(){
     $('#info').textContent='متصفحك لا يسمح بالتخزين المحلي هنا (قد يكون وضع التصفح الخفي).'});
 })();
